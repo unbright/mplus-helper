@@ -1,0 +1,284 @@
+package com.unbright.pagination.extension;
+
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.enums.SqlKeyword;
+import com.baomidou.mybatisplus.core.toolkit.LambdaUtils;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
+import com.baomidou.mybatisplus.core.toolkit.support.SerializedLambda;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import org.apache.ibatis.reflection.property.PropertyNamer;
+
+import java.util.Arrays;
+import java.util.Map;
+import java.util.stream.Stream;
+
+/**
+ * Created with IDEA
+ * ProjectName: mplus-helper
+ * Date: 2020/3/30
+ * Time: 11:13
+ *
+ * @author wzpeng
+ * @version v1.0
+ */
+@EqualsAndHashCode(callSuper = true)
+@Data
+@JsonIgnoreProperties(value = {"params", "wrapper", "ew"})
+public class QueryPage<T> extends Page<T> {
+
+    private static final String SEPARATOR = "|";
+
+    private Map<String, String> params;
+    private QueryWrapper<T> wrapper;
+
+    public QueryPage() {
+        super(0, 10);
+    }
+
+    public QueryPage(long current, long size) {
+        super(current, size);
+        wrapper = new QueryWrapper<>();
+    }
+
+    public QueryPage(long current, long size, Map<String, String> params) {
+        this(current, size);
+        this.params = params;
+        params.entrySet().parallelStream().forEach(e -> wrapper.eq(String.valueOf(e.getKey()), e.getValue()));
+    }
+
+    /**
+     * 添加like条件.
+     *
+     * @param column 字段
+     * @param value  值
+     * @return current
+     */
+    public QueryPage<T> addLike(String column, Object value) {
+        if (value != null) {
+            this.wrapper.like(column, value);
+        }
+        return this;
+    }
+
+    /**
+     * use lambda.
+     *
+     * @param column 字段
+     * @param value  值
+     * @return current
+     */
+    public QueryPage<T> addLike(SFunction<T, Object> column, Object value) {
+        return addLike(getDbColumn(column), value);
+    }
+
+    /**
+     * greater than equals.
+     *
+     * @param column 字段
+     * @param value  值
+     * @return current
+     */
+    public QueryPage<T> addGte(String column, Object value) {
+        if (value != null) {
+            this.wrapper.ge(column, value);
+        }
+        return this;
+    }
+
+    /**
+     * use lambda.
+     *
+     * @param column 字段
+     * @param value  值
+     * @return current
+     */
+    public QueryPage<T> addGte(SFunction<T, Object> column, Object value) {
+        return addGte(getDbColumn(column), value);
+    }
+
+    /**
+     * less than equals.
+     *
+     * @param column 字段
+     * @param value  值
+     * @return current
+     */
+    public QueryPage<T> addLte(String column, Object value) {
+        if (value != null) {
+            this.wrapper.le(column, value);
+        }
+        return this;
+    }
+
+    /**
+     * equals.
+     *
+     * @param column 字段
+     * @param value  值
+     * @return current
+     */
+    public QueryPage<T> addEq(String column, Object value) {
+        if (value != null) {
+            this.wrapper.eq(column, value);
+        }
+        return this;
+    }
+
+    /**
+     * lambda
+     */
+    public QueryPage<T> addEq(SFunction<T, Object> column, Object value) {
+        return addEq(getDbColumn(column), value);
+    }
+
+    /**
+     * not equals
+     */
+    public QueryPage<T> addNe(String column, Object value) {
+        if (value != null) {
+            this.wrapper.ne(column, value);
+        }
+        return this;
+    }
+
+    public QueryPage<T> addIn(String column, Object... value) {
+        if (value != null) {
+            this.wrapper.in(column, value);
+        }
+        return this;
+    }
+
+    public QueryPage<T> addIn(SFunction<T, Object> function, Object... value) {
+        return addIn(getDbColumn(function), value);
+    }
+
+    /**
+     * 添加条件.
+     *
+     * @param column  字段
+     * @param value   值
+     * @param keyword 条件
+     * @return current
+     */
+    public QueryPage<T> add(String column, Object value, SqlKeyword keyword) {
+        switch (keyword) {
+            case EQ:
+                return addEq(column, value);
+            case LIKE:
+                return addLike(column, value);
+            case GE:
+                return addGte(column, value);
+            case LE:
+                return addLte(column, value);
+            case ASC:
+                return addOrderByAsc(String.valueOf(value));
+            case DESC:
+                return addOrderByDesc(String.valueOf(value));
+        }
+        return this;
+    }
+
+    /**
+     * and (a = ? or b = ?)
+     */
+    public QueryPage<T> orEqMulti(Object value, String... columns) {
+        if (ObjectUtils.isNotEmpty(value)) {
+            this.wrapper.and(queryWrapper -> Arrays.asList(columns).forEach(key -> queryWrapper.or().eq(key, value)));
+        }
+        return this;
+    }
+
+    /**
+     * and (a like ? or b like ?)
+     */
+    public QueryPage<T> orLikeMulti(Object value, String... columns) {
+        if (ObjectUtils.isNotEmpty(value)) {
+            this.wrapper.and(queryWrapper -> Arrays.asList(columns).forEach(key -> queryWrapper.or().like(key, value)));
+        }
+        return this;
+    }
+
+    @SafeVarargs
+    public final QueryPage<T> orLikeMulti(Object value, SFunction<T, Object>... functions) {
+        if (ObjectUtils.isNotEmpty(value)) {
+            String[] keys = Stream.of(functions).map(this::getDbColumn).toArray(String[]::new);
+            this.wrapper.and(queryWrapper -> Arrays.asList(keys).forEach(key -> queryWrapper.or().like(key, value)));
+        }
+        return this;
+    }
+
+    public QueryPage<T> groupBy(String... columns) {
+        this.wrapper.groupBy(columns);
+        return this;
+    }
+
+    public QueryPage<T> addOrderByAsc(String... keys) {
+        this.wrapper.orderByAsc(keys);
+        return this;
+    }
+
+    public QueryPage<T> addOrderByDesc(String... keys) {
+        this.wrapper.orderByDesc(keys);
+        return this;
+    }
+
+    @SafeVarargs
+    public final QueryPage<T> addOrderByDesc(SFunction<T, Object>... functions) {
+        String[] keys = Stream.of(functions).map(this::getDbColumn).toArray(String[]::new);
+        return this.addOrderByDesc(keys);
+    }
+
+    public QueryPage<T> clear() {
+        this.wrapper.clear();
+        return this;
+    }
+
+    /**
+     * 解析请求参数并转化为筛选条件.
+     *
+     * @param params 请求参数
+     * @return 查询条件
+     */
+    public QueryPage<T> resolve(Map<String, String> params) {
+        params.forEach(this::addCondition);
+        return this;
+    }
+
+    /**
+     * 解析参数并添加筛选条件.
+     *
+     * @param key   key
+     * @param value value
+     */
+    private void addCondition(String key, String value) {
+        if (key.lastIndexOf(SEPARATOR) == -1) {
+            this.add(key, value, SqlKeyword.EQ);
+        } else {
+            String column = key.substring(0, key.lastIndexOf(SEPARATOR));
+            String symbol = key.substring(key.lastIndexOf(SEPARATOR) + 1);
+            this.add(column, value, SqlKeyword.valueOf(symbol.toUpperCase()));
+        }
+    }
+
+    public Wrapper<T> getEw() {
+        return this.wrapper;
+    }
+
+    /**
+     * 将方法签名转为数据库字段.
+     *
+     * @param function function
+     * @return column name
+     */
+    private String getDbColumn(SFunction<T, Object> function) {
+        SerializedLambda lambda = LambdaUtils.resolve(function);
+        String fieldName = PropertyNamer.methodToProperty(lambda.getImplMethodName());
+        return StringUtils.camelToUnderline(fieldName);
+    }
+}
