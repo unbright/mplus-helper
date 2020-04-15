@@ -1,18 +1,14 @@
 package com.unbright.pagination.extension;
 
+import com.unbright.pagination.extension.annotation.QueryStatement;
+import org.apache.commons.collections4.EnumerationUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Spliterator;
-import java.util.Spliterators;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 /**
  * Created with IDEA
@@ -34,7 +30,8 @@ public class BaseController {
      * @return page查询
      */
     protected <T> QueryPage<T> initPage(String... ignoreProperties) {
-        Map<String, String> params = enumerationToStream(request.getParameterNames())
+        Map<String, String> params = EnumerationUtils.toList(request.getParameterNames())
+                .stream()
                 .collect(Collectors.toMap(k -> k, v -> request.getParameter(v)));
         Integer page = MapUtils.getInteger(params, "page", 1);
         Integer size = MapUtils.getInteger(params, "size", 10);
@@ -56,20 +53,15 @@ public class BaseController {
         return queryPage.resolve(params);
     }
 
-    private <T> Stream<T> enumerationToStream(Enumeration<T> en) {
-        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(
-                new Iterator<T>() {
-                    @Override
-                    public T next() {
-                        return en.nextElement();
-                    }
-
-                    @Override
-                    public boolean hasNext() {
-                        return en.hasMoreElements();
-                    }
-                },
-                Spliterator.ORDERED), false);
-
+    /**
+     * 初始化查询.
+     *
+     * @param obj 条件对象.
+     * @param <T> T
+     * @return page
+     */
+    protected <T> QueryPage<T> smartQuery(Object obj) {
+        QueryStatement<T> statement = new QueryStatement<>(smartInitPage("*"));
+        return statement.createQuery(obj);
     }
 }

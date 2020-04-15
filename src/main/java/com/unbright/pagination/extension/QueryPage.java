@@ -60,9 +60,21 @@ public class QueryPage<T> extends Page<T> {
      * @return current
      */
     public QueryPage<T> addLike(String column, Object value) {
+        return this.addLike(column, value, this.wrapper);
+    }
+
+    /**
+     * 添加like条件.
+     *
+     * @param column 字段
+     * @param value  值
+     * @return current
+     */
+    public QueryPage<T> addLike(String column, Object value, QueryWrapper<T> wrapper) {
         if (value != null) {
-            this.wrapper.like(column, value);
+            wrapper.like(column, value);
         }
+        this.setWrapper(wrapper);
         return this;
     }
 
@@ -85,9 +97,21 @@ public class QueryPage<T> extends Page<T> {
      * @return current
      */
     public QueryPage<T> addGte(String column, Object value) {
+        return this.addGte(column, value, this.wrapper);
+    }
+
+    /**
+     * greater than equals.
+     *
+     * @param column 字段
+     * @param value  值
+     * @return current
+     */
+    public QueryPage<T> addGte(String column, Object value, QueryWrapper<T> wrapper) {
         if (value != null) {
-            this.wrapper.ge(column, value);
+            wrapper.ge(column, value);
         }
+        this.setWrapper(wrapper);
         return this;
     }
 
@@ -110,9 +134,21 @@ public class QueryPage<T> extends Page<T> {
      * @return current
      */
     public QueryPage<T> addLte(String column, Object value) {
+        return this.addLte(column, value, wrapper);
+    }
+
+    /**
+     * less than equals.
+     *
+     * @param column 字段
+     * @param value  值
+     * @return current
+     */
+    public QueryPage<T> addLte(String column, Object value, QueryWrapper<T> wrapper) {
         if (value != null) {
-            this.wrapper.le(column, value);
+            wrapper.le(column, value);
         }
+        this.setWrapper(wrapper);
         return this;
     }
 
@@ -124,9 +160,21 @@ public class QueryPage<T> extends Page<T> {
      * @return current
      */
     public QueryPage<T> addEq(String column, Object value) {
+        return this.addEq(column, value, this.wrapper);
+    }
+
+    /**
+     * equals.
+     *
+     * @param column 字段
+     * @param value  值
+     * @return current
+     */
+    public QueryPage<T> addEq(String column, Object value, QueryWrapper<T> wrapper) {
         if (value != null) {
-            this.wrapper.eq(column, value);
+            wrapper.eq(column, value);
         }
+        this.setWrapper(wrapper);
         return this;
     }
 
@@ -167,19 +215,31 @@ public class QueryPage<T> extends Page<T> {
      * @return current
      */
     public QueryPage<T> add(String column, Object value, SqlKeyword keyword) {
+        return this.add(column, value, keyword, this.wrapper);
+    }
+
+    /**
+     * 添加条件.
+     *
+     * @param column  字段
+     * @param value   值
+     * @param keyword 条件
+     * @return current
+     */
+    public QueryPage<T> add(String column, Object value, SqlKeyword keyword, QueryWrapper<T> wrapper) {
         switch (keyword) {
             case EQ:
-                return addEq(column, value);
+                return addEq(column, value, wrapper);
             case LIKE:
-                return addLike(column, value);
+                return addLike(column, value, wrapper);
             case GE:
-                return addGte(column, value);
+                return addGte(column, value, wrapper);
             case LE:
-                return addLte(column, value);
+                return addLte(column, value, wrapper);
             case ASC:
-                return addOrderByAsc(String.valueOf(value));
+                return addOrderByAsc(wrapper, String.valueOf(value));
             case DESC:
-                return addOrderByDesc(String.valueOf(value));
+                return addOrderByDesc(wrapper, String.valueOf(value));
         }
         return this;
     }
@@ -204,6 +264,19 @@ public class QueryPage<T> extends Page<T> {
         return this;
     }
 
+    /**
+     * custom condition
+     */
+    public QueryPage<T> orMulti(QueryWrapper<T> wrapper, SqlKeyword keyword, Object value, String... columns) {
+        if (ObjectUtils.isNotEmpty(value)) {
+            wrapper.and(queryWrapper ->
+                    Arrays.asList(columns).forEach(key ->
+                            this.add(key, value, keyword, queryWrapper.or())));
+        }
+        this.setWrapper(wrapper);
+        return this;
+    }
+
     @SafeVarargs
     public final QueryPage<T> orLikeMulti(Object value, SFunction<T, Object>... functions) {
         if (ObjectUtils.isNotEmpty(value)) {
@@ -219,12 +292,22 @@ public class QueryPage<T> extends Page<T> {
     }
 
     public QueryPage<T> addOrderByAsc(String... keys) {
-        this.wrapper.orderByAsc(keys);
+        return this.addOrderByAsc(this.wrapper, keys);
+    }
+
+    public QueryPage<T> addOrderByAsc(QueryWrapper<T> wrapper, String... keys) {
+        wrapper.orderByAsc(keys);
+        this.setWrapper(wrapper);
         return this;
     }
 
     public QueryPage<T> addOrderByDesc(String... keys) {
-        this.wrapper.orderByDesc(keys);
+        return this.addOrderByDesc(this.wrapper, keys);
+    }
+
+    public QueryPage<T> addOrderByDesc(QueryWrapper<T> wrapper, String... keys) {
+        wrapper.orderByDesc(keys);
+        this.setWrapper(wrapper);
         return this;
     }
 

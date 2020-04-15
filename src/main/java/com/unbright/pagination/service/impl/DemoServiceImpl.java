@@ -6,6 +6,9 @@ import com.unbright.pagination.dao.DemoDao;
 import com.unbright.pagination.entity.Haphazard;
 import com.unbright.pagination.extension.QueryPage;
 import com.unbright.pagination.service.DemoService;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.mybatis.spring.SqlSessionFactoryBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 
 /**
