@@ -87,3 +87,15 @@ public class QueryCondition {
 }
 ```
 
+**使用@QueryPredicate参数注解自动注入分页对象**
+```java
+    /**
+     * QueryPredicate中如果不传类型，则使用request param为查询条件.
+     */
+    @GetMapping("complex2")
+    public ResponseEntity<IPage> complexQuery2(@QueryPredicate(QueryCondition.class) QueryPage<?> page) {
+        log.info(page.getEw().getCustomSqlSegment());
+        return ResponseEntity.ok(page);
+    }
+```
+

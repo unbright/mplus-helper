@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.unbright.pagination.entity.Haphazard;
 import com.unbright.pagination.extension.BaseController;
 import com.unbright.pagination.extension.QueryPage;
+import com.unbright.pagination.extension.annotation.QueryPredicate;
+import com.unbright.pagination.extension.util.QueryUtil;
 import com.unbright.pagination.service.DemoService;
 import com.unbright.pagination.vo.QueryCondition;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +15,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * Created with IDEA
@@ -29,6 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class DemoController extends BaseController {
 
     private final DemoService demoService;
+    private final HttpServletRequest request;
 
     /**
      * 单表查询
@@ -36,7 +41,7 @@ public class DemoController extends BaseController {
     @GetMapping("simple")
     public ResponseEntity<Page<Haphazard>> simpleQuery(@RequestParam String categoryId) {
         // ?id=123 => where id = 123
-        QueryPage<Haphazard> page = smartInitPage();
+        QueryPage<Haphazard> page = QueryUtil.smartInitPage(request);
         //and category_id = ?
         page.addEq(Haphazard::getCategoryId, categoryId);
         //and name like '%name%'
@@ -56,7 +61,7 @@ public class DemoController extends BaseController {
      */
     @GetMapping("join")
     public ResponseEntity<IPage> joinQuery(@RequestParam String keywords) {
-        QueryPage<?> page = smartInitPage("keywords");
+        QueryPage<?> page = QueryUtil.smartInitPage(request, "keywords");
         //add custom condition
         //and (a.key like ? or b.key like ?)
         page.orLikeMulti(keywords, "a.key", "b.key");
@@ -70,8 +75,19 @@ public class DemoController extends BaseController {
      */
     @GetMapping("complex")
     public ResponseEntity<IPage> complexQuery(QueryCondition condition) {
-        QueryPage<?> page = smartQuery(condition);
+        QueryPage<?> page = QueryUtil.smartQuery(request, condition);
         log.info(page.getEw().getTargetSql());
+        return ResponseEntity.ok(page);
+    }
+
+    /**
+     * 自定义注解复杂查询.
+     *
+     * @param page 条件对象.
+     */
+    @GetMapping("complex2")
+    public ResponseEntity<IPage> complexQuery2(@QueryPredicate(QueryCondition.class) QueryPage<?> page) {
+        log.info(page.getEw().getCustomSqlSegment());
         return ResponseEntity.ok(page);
     }
 }
