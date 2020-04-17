@@ -1,7 +1,7 @@
 package com.unbright.pagination.extension.util;
 
 import com.unbright.pagination.extension.QueryPage;
-import com.unbright.pagination.extension.annotation.QueryStatement;
+import com.unbright.pagination.extension.handler.QueryPageWrapper;
 import org.apache.commons.collections4.EnumerationUtils;
 import org.apache.commons.collections4.MapUtils;
 
@@ -57,10 +57,11 @@ public final class QueryUtil {
      * @param <T> T
      * @return page
      */
-    public static <T> QueryPage<T> smartQuery(HttpServletRequest request, Object obj) {
+    public static <T> QueryPageWrapper<T> smartQuery(HttpServletRequest request, Object obj) {
         QueryPage<T> page = smartInitPage(request, "*");
         page.clear();
-        QueryStatement<T> statement = new QueryStatement<>(page);
-        return statement.createQuery(obj);
+        QueryPageWrapper<T> wrapper = new QueryPageWrapper<>(obj, page);
+        wrapper.createQuery();
+        return wrapper;
     }
 }

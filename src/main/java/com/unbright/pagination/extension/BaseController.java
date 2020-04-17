@@ -1,6 +1,6 @@
 package com.unbright.pagination.extension;
 
-import com.unbright.pagination.extension.annotation.QueryStatement;
+import com.unbright.pagination.extension.handler.QueryPageWrapper;
 import org.apache.commons.collections4.EnumerationUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,7 +61,8 @@ public class BaseController {
      * @return page
      */
     protected <T> QueryPage<T> smartQuery(Object obj) {
-        QueryStatement<T> statement = new QueryStatement<>(smartInitPage("*"));
-        return statement.createQuery(obj);
+        QueryPageWrapper<T> wrapper = new QueryPageWrapper<>(obj, smartInitPage("*"));
+        wrapper.createQuery();
+        return wrapper.getPage();
     }
 }

@@ -6,6 +6,7 @@ import com.unbright.pagination.entity.Haphazard;
 import com.unbright.pagination.extension.BaseController;
 import com.unbright.pagination.extension.QueryPage;
 import com.unbright.pagination.extension.annotation.QueryPredicate;
+import com.unbright.pagination.extension.handler.QueryPageWrapper;
 import com.unbright.pagination.extension.util.QueryUtil;
 import com.unbright.pagination.service.DemoService;
 import com.unbright.pagination.vo.QueryCondition;
@@ -70,24 +71,30 @@ public class DemoController extends BaseController {
 
     /**
      * 自定义注解复杂查询.
+     * <p>
+     * 请求地址为: /complex?name=1231&age=10&type=44&createTime=create_time
+     * </p>
      *
      * @param condition 条件对象.
      */
     @GetMapping("complex")
     public ResponseEntity<IPage> complexQuery(QueryCondition condition) {
-        QueryPage<?> page = QueryUtil.smartQuery(request, condition);
+        QueryPage<?> page = QueryUtil.smartQuery(request, condition).getPage();
         log.info(page.getEw().getTargetSql());
         return ResponseEntity.ok(page);
     }
 
     /**
      * 自定义注解复杂查询.
+     * <p>
+     * 请求地址为: /complex2?name=1231&age=10&type=44&createTime=create_time
+     * </p>
      *
-     * @param page 条件对象.
+     * @param wrapper 条件对象.
      */
     @GetMapping("complex2")
-    public ResponseEntity<IPage> complexQuery2(@QueryPredicate(QueryCondition.class) QueryPage<?> page) {
-        log.info(page.getEw().getCustomSqlSegment());
-        return ResponseEntity.ok(page);
+    public ResponseEntity<IPage> complexQuery2(@QueryPredicate(QueryCondition.class) QueryPageWrapper<?> wrapper) {
+        log.info(wrapper.getPage().getEw().getCustomSqlSegment());
+        return ResponseEntity.ok(wrapper.getPage());
     }
 }

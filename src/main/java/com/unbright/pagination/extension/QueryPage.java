@@ -317,9 +317,13 @@ public class QueryPage<T> extends Page<T> {
         return this.addOrderByDesc(keys);
     }
 
-    public QueryPage<T> clear() {
-        this.wrapper.clear();
+    public QueryPage<T> clear(QueryWrapper<T> wrapper) {
+        wrapper.clear();
         return this;
+    }
+
+    public QueryPage<T> clear() {
+        return this.clear(this.wrapper);
     }
 
     /**

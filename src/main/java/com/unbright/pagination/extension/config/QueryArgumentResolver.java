@@ -1,7 +1,7 @@
 package com.unbright.pagination.extension.config;
 
-import com.unbright.pagination.extension.QueryPage;
 import com.unbright.pagination.extension.annotation.QueryPredicate;
+import com.unbright.pagination.extension.handler.QueryPageWrapper;
 import com.unbright.pagination.extension.util.QueryUtil;
 import org.springframework.beans.MutablePropertyValues;
 import org.springframework.core.MethodParameter;
@@ -26,7 +26,7 @@ public class QueryArgumentResolver implements HandlerMethodArgumentResolver {
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
-        return parameter.getParameterType().isAssignableFrom(QueryPage.class)
+        return parameter.getParameterType().isAssignableFrom(QueryPageWrapper.class)
                 && parameter.hasParameterAnnotation(QueryPredicate.class);
     }
 
