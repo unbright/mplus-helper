@@ -93,9 +93,9 @@ public class QueryCondition {
      * QueryPredicate中如果不传类型，则使用request param为查询条件.
      */
     @GetMapping("complex2")
-    public ResponseEntity<IPage> complexQuery2(@QueryPredicate(QueryCondition.class) QueryPage<?> page) {
-        log.info(page.getEw().getCustomSqlSegment());
-        return ResponseEntity.ok(page);
+    public ResponseEntity<IPage> complexQuery2(@QueryPredicate(QueryCondition.class) QueryPageWrapper<?> wrapper) {
+        log.info(wrapper.getPage().getEw().getCustomSqlSegment());
+        return ResponseEntity.ok(wrapper.getPage());
     }
 ```
 
