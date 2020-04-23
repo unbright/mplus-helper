@@ -2,7 +2,7 @@ package com.unbright.pagination.dao;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.unbright.pagination.entity.Haphazard;
+import com.unbright.pagination.entity.Order;
 import com.unbright.pagination.extension.QueryPage;
 import org.apache.ibatis.annotations.Mapper;
 import org.springframework.stereotype.Repository;
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Repository;
  */
 @Mapper
 @Repository
-public interface DemoDao extends BaseMapper<Haphazard> {
+public interface OrderDao extends BaseMapper<Order> {
 
     IPage queryPage(QueryPage page);
 }

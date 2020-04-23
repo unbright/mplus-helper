@@ -51,7 +51,7 @@ public class DemoController extends BaseController {
         //page.orLikeMulti("name", Haphazard::getName, Haphazard::getDescription);
         //order by create_time desc
         page.addOrderByDesc(Haphazard::getCreateTime);
-        return ResponseEntity.ok(demoService.page(page, page.getEw()));
+        return ResponseEntity.ok(null);
     }
 
     /**

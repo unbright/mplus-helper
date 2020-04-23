@@ -98,4 +98,62 @@ public class QueryCondition {
         return ResponseEntity.ok(wrapper.getPage());
     }
 ```
+##### 使用查询构造器构造复杂查询
 
+###### 1.创建查询返回结果对象
+示例:
+```java
+@Data
+public class OrderInfo {
+
+    @Alias(entity = Order.class)
+    private String id;
+
+    @Alias(entity = Order.class)
+    private BigDecimal totalPrice;
+
+    @Alias(entity = Order.class)
+    private LocalDateTime createTime;
+
+    @Alias(entity = Order.class)
+    private int number;
+
+    @Alias(name = "name", entity = User.class)
+    private String username;
+
+    @Alias(name = "name", entity = Goods.class)
+    private String goodsName;
+
+    @Alias(entity = Goods.class)
+    private int stock;
+}
+```
+***实例中使用Alias注解声明查询的别名,name表示查询字段名称，entity表示所属对象,属性名字表示查询结果别名***
+
+###### 2.构造查询方法
+示例:
+```java
+@SpringBootTest
+class LambdaJoinQueryWrapperTest {
+
+    @Autowired
+    private ComplexQuery complexQuery;
+
+    @Test
+    public void testQuery() {
+        Order order = new Order();
+        User user = new User();
+        Goods goods = new Goods();
+        JoinQueryWrapper wrapper = JoinWrappers.select(order.getClass()).as("od").join(user.getClass()).as("u")
+                .on(user::getId, order::getUserId)
+                .join(goods.getClass()).as("g")
+                .on(goods::getId, order::getGoodsId)
+                .eq(user::getId, 2)
+                .ge(order::getTotalPrice, BigDecimal.valueOf(1))
+                .orderByDesc(order::getCreateTime)
+                .result(OrderInfo.class);
+        List<OrderInfo> dtos = complexQuery.selectList(wrapper);
+        System.out.println(dtos);
+    }
+}
+```

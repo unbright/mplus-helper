@@ -2,13 +2,10 @@ package com.unbright.pagination.service.impl;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.unbright.pagination.dao.DemoDao;
-import com.unbright.pagination.entity.Haphazard;
+import com.unbright.pagination.dao.OrderDao;
+import com.unbright.pagination.entity.Order;
 import com.unbright.pagination.extension.QueryPage;
 import com.unbright.pagination.service.DemoService;
-import org.apache.ibatis.session.SqlSessionFactory;
-import org.mybatis.spring.SqlSessionFactoryBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 
 /**
@@ -21,7 +18,7 @@ import org.springframework.stereotype.Service;
  * @version v1.0
  */
 @Service
-public class DemoServiceImpl extends ServiceImpl<DemoDao, Haphazard> implements DemoService {
+public class DemoServiceImpl extends ServiceImpl<OrderDao, Order> implements DemoService {
 
     @Override
     public IPage customQuery(QueryPage page) {

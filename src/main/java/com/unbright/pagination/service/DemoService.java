@@ -2,7 +2,7 @@ package com.unbright.pagination.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.unbright.pagination.entity.Haphazard;
+import com.unbright.pagination.entity.Order;
 import com.unbright.pagination.extension.QueryPage;
 
 /**
@@ -14,7 +14,7 @@ import com.unbright.pagination.extension.QueryPage;
  * @author WZP
  * @version v1.0
  */
-public interface DemoService extends IService<Haphazard> {
+public interface DemoService extends IService<Order> {
 
     IPage customQuery(QueryPage page);
 }
