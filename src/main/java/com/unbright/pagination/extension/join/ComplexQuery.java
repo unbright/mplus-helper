@@ -59,7 +59,7 @@ public class ComplexQuery {
         String countMsId = createMappedStatement(createCountSql(wrapper), long.class);
         long total = sqlSession.selectOne(countMsId, getParams(wrapper));
         List<T> records = this.selectLimit(wrapper);
-        Page<T> page = new Page<>();
+        IPage<T> page = wrapper.getPage();
         page.setTotal(total);
         page.setRecords(records);
         return page;

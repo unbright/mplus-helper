@@ -1,14 +1,15 @@
 package com.unbright.pagination.extension.join.query;
 
 import com.baomidou.mybatisplus.core.conditions.SharedString;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.unbright.pagination.extension.QueryPage;
 import com.unbright.pagination.extension.annotation.Alias;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
 
 import java.lang.reflect.Field;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.baomidou.mybatisplus.core.toolkit.StringPool.COMMA;
@@ -28,7 +29,8 @@ public class JoinQueryWrapper extends AbstractJoinWrapper<JoinQueryWrapper> {
 
     private SharedString sqlSelect = new SharedString();
     private Class<?> result;
-    private IPage<?> page = new Page<>();
+    private QueryPage<?> page = new QueryPage<>();
+    private SharedString lastSql = new SharedString(" ");
 
     @SuppressWarnings("unchecked")
     public JoinQueryWrapper from(Class<?> entity) {
@@ -99,8 +101,39 @@ public class JoinQueryWrapper extends AbstractJoinWrapper<JoinQueryWrapper> {
         return this.result;
     }
 
-    public void where(IPage<?> page) {
+    public JoinQueryWrapper where(QueryPage<?> page) {
         this.page = page;
+        super.paramNameValuePairs = page.getWrapper().getParamNameValuePairs();
+        return typedThis;
+    }
+
+    public JoinQueryWrapper last(String lastSql) {
+        this.lastSql.setStringValue(lastSql);
+        return typedThis;
+    }
+
+    @Override
+    public String getSqlSegment() {
+        String sqlSegment = this.page.getEw().getSqlSegment();
+        if (StringUtils.isBlank(sqlSegment)) {
+            return super.getSqlSegment();
+        }
+        return super.getSqlSegment() + sqlSegment + this.lastSql.getStringValue();
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> QueryPage<T> getPage() {
+        return (QueryPage<T>) page;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Map<String, Object> getParamNameValuePairs() {
+        Map<String, Object> map = page.getWrapper().getParamNameValuePairs();
+        if (MapUtils.isEmpty(map)) {
+            return super.getParamNameValuePairs();
+        }
+        return map;
     }
 
     public String getLimitSql() {

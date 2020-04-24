@@ -2,13 +2,21 @@ package com.unbright.pagination.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.unbright.pagination.entity.Goods;
 import com.unbright.pagination.entity.Haphazard;
+import com.unbright.pagination.entity.Order;
+import com.unbright.pagination.entity.User;
 import com.unbright.pagination.extension.BaseController;
 import com.unbright.pagination.extension.QueryPage;
 import com.unbright.pagination.extension.annotation.QueryPredicate;
 import com.unbright.pagination.extension.handler.QueryPageWrapper;
+import com.unbright.pagination.extension.join.ComplexQuery;
+import com.unbright.pagination.extension.join.JoinWrappers;
+import com.unbright.pagination.extension.join.query.JoinQueryWrapper;
 import com.unbright.pagination.extension.util.QueryUtil;
 import com.unbright.pagination.service.DemoService;
+import com.unbright.pagination.vo.OrderInfo;
+import com.unbright.pagination.vo.OrderQueryVo;
 import com.unbright.pagination.vo.QueryCondition;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +43,7 @@ public class DemoController extends BaseController {
 
     private final DemoService demoService;
     private final HttpServletRequest request;
+    private final ComplexQuery complexQuery;
 
     /**
      * 单表查询
@@ -96,5 +105,20 @@ public class DemoController extends BaseController {
     public ResponseEntity<IPage> complexQuery2(@QueryPredicate(QueryCondition.class) QueryPageWrapper<?> wrapper) {
         log.info(wrapper.getPage().getEw().getCustomSqlSegment());
         return ResponseEntity.ok(wrapper.getPage());
+    }
+
+    @GetMapping("complex3")
+    public ResponseEntity<IPage<OrderInfo>> complexQuery3(@QueryPredicate(OrderQueryVo.class) QueryPageWrapper<OrderInfo> wrapper) {
+        User user = new User();
+        Order order = new Order();
+        Goods goods = new Goods();
+        JoinQueryWrapper queryWrapper = JoinWrappers.select(Order.class).as("od").join(User.class).as("u")
+                .on(user::getId, order::getUserId)
+                .join(Goods.class).as("g")
+                .on(goods::getId, order::getGoodsId)
+                .where(wrapper.getPage())
+                .result(OrderInfo.class);
+        IPage<OrderInfo> page = complexQuery.selectPage(queryWrapper);
+        return ResponseEntity.ok(page);
     }
 }

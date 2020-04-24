@@ -7,6 +7,7 @@ import com.unbright.pagination.entity.Goods;
 import com.unbright.pagination.entity.Order;
 import com.unbright.pagination.entity.User;
 import com.unbright.pagination.extension.join.query.JoinQueryWrapper;
+import com.unbright.pagination.vo.OrderInfo;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -60,7 +61,7 @@ class LambdaJoinQueryWrapperTest {
                 .orderByDesc(order::getCreateTime)
                 .limit(1).offset(3)
                 .result(OrderInfo.class);
-        IPage<Object> page = complexQuery.selectPage(wrapper);
+        IPage<OrderInfo> page = complexQuery.selectPage(wrapper);
         System.out.println(new ObjectMapper().writeValueAsString(page));
     }
 }

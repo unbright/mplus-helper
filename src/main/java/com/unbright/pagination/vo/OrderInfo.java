@@ -1,4 +1,4 @@
-package com.unbright.pagination.extension.join;
+package com.unbright.pagination.vo;
 
 import com.unbright.pagination.entity.Goods;
 import com.unbright.pagination.entity.Order;

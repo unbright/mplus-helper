@@ -4,7 +4,7 @@ MybatisPlus自定义分页对象,实现自定义筛选条件解析
 ## 使用方法
 可参考代码中的DemoController
 
-#### 简单查询条件
+### 简单查询条件
 ```java
 @GetMapping
 public ResponseEntity<Page<Haphazard>> query1(@RequestParam String categoryId) {
@@ -24,7 +24,7 @@ public ResponseEntity<Page<Haphazard>> query1(@RequestParam String categoryId) {
 }
 ```
 
-#### 复杂查询条件，自定义sql
+### 复杂查询条件，自定义sql
 例如自定义sql为如下
 ```sql
 select * from t1 join t2 on t1.id = t2.a_id
@@ -46,7 +46,7 @@ public ResponseEntity<IPage> joinQuery(@RequestParam String keywords) {
 }
 ```
 
-#### 使用注解声明查询条件
+### 使用注解声明查询条件
 如下例子的SQL语句为 where  (t1.nickname LIKE ? OR t2.nickname LIKE ?) AND (age >= ? OR t1.type = ?) ORDER BY create_time DESC
 ```java
 @OrStatement({"age", "type"})
@@ -98,9 +98,9 @@ public class QueryCondition {
         return ResponseEntity.ok(wrapper.getPage());
     }
 ```
-#### 使用查询构造器构造复杂查询
+### 使用查询构造器构造复杂查询
 
-##### 1.创建查询返回结果对象
+#### 1.创建查询返回结果对象
 示例:
 ```java
 @Data
@@ -130,7 +130,7 @@ public class OrderInfo {
 ```
 ***实例中使用Alias注解声明查询的别名,name表示查询字段名称，entity表示所属对象,属性名字表示查询结果别名***
 
-##### 2.构造查询方法
+#### 2.构造查询方法
 示例:
 ```java
 @SpringBootTest
@@ -160,20 +160,37 @@ class LambdaJoinQueryWrapperTest {
 输出sql如下,本质使用的是Mybatis Plus的sql构造器，所以不用担心sql注入
 ```sql
 SELECT
-	od.id,
-	od.total_price,
-	od.create_time,
-	od.number,
-	u.`name` AS username,
-	g.`name` AS goodsName,
-	g.stock 
+	od.id AS id,
+	od.total_price AS totalPrice,
+	od.create_time AS createTime,
+	od.number AS number,
+	u.NAME AS username,
+	g.NAME AS goodsName,
+	g.stock AS stock 
 FROM
-	t_order od
-	JOIN t_user u ON u.id = od.user_id
-	JOIN t_goods g ON g.id = od.goods_id 
+	t_order AS od
+	JOIN t_user AS u ON u.id = od.user_id
+	JOIN t_goods AS g ON g.id = od.goods_id 
 WHERE
-	u.id = 2
-	AND total_price > 1 
-ORDER BY
-	od.create_time
+	(
+	u.id = #{ew.paramNameValuePairs.MPGENVAL1} AND od.total_price >= #{ew.paramNameValuePairs.MPGENVAL2}) ORDER BY od.create_time DESC
+```
+
+### 使用条件构造器和自定义条件组合查询
+```java
+@GetMapping("complex3")
+    public ResponseEntity<IPage<OrderInfo>> complexQuery3(@QueryPredicate(OrderQueryVo.class) QueryPageWrapper<OrderInfo> wrapper) {
+        User user = new User();
+        Order order = new Order();
+        Goods goods = new Goods();
+        //使用where方法可传入QueryPage对象，自动构造查询条件
+        JoinQueryWrapper queryWrapper = JoinWrappers.select(Order.class).as("od").join(User.class).as("u")
+                .on(user::getId, order::getUserId)
+                .join(Goods.class).as("g")
+                .on(goods::getId, order::getGoodsId)
+                .where(wrapper.getPage())
+                .result(OrderInfo.class);
+        IPage<OrderInfo> page = complexQuery.selectPage(queryWrapper);
+        return ResponseEntity.ok(page);
+    }
 ```
