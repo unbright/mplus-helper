@@ -8,10 +8,10 @@ import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import com.baomidou.mybatisplus.core.toolkit.ArrayUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringPool;
 import com.baomidou.mybatisplus.core.toolkit.support.SerializedLambda;
-import com.unbright.pagination.extension.util.FunctionUtils;
-import com.unbright.pagination.extension.join.support.JFunction;
 import com.unbright.pagination.extension.join.segments.JoinOnMergeSegment;
 import com.unbright.pagination.extension.join.segments.JoinSegment;
+import com.unbright.pagination.extension.join.support.JFunction;
+import com.unbright.pagination.extension.util.FunctionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.reflection.property.PropertyNamer;
 
@@ -33,16 +33,12 @@ import static com.baomidou.mybatisplus.core.enums.SqlKeyword.ORDER_BY;
  * @version v1.0
  */
 @SuppressWarnings("all")
-public abstract class AbstractJoinQueryWrapper<Children extends AbstractJoinQueryWrapper<Children>> extends LambdaQueryWrapper
-        implements Join<Children, JFunction, JFunction>, Alias<Children> {
+public abstract class AbstractJoinWrapper<Children extends AbstractJoinWrapper<Children>> extends LambdaQueryWrapper
+        implements Join<Children, JFunction, JFunction>, Alias<Children>, Page<Children> {
 
-    /**
-     * 占位符
-     */
     protected final Children typedThis = (Children) this;
 
     protected final Map<String, String> joinMap = new ConcurrentHashMap<>(1);
-    protected final Map<String, String> tableMap = new ConcurrentHashMap<>(1);
     private final Map<JFunction, String> columnCache = new ConcurrentHashMap<>(1);
 
     private final JoinOnMergeSegment segment = new JoinOnMergeSegment();
@@ -103,12 +99,32 @@ public abstract class AbstractJoinQueryWrapper<Children extends AbstractJoinQuer
         return this.addCondition(true, column, SqlKeyword.EQ, val);
     }
 
+    public Children ne(JFunction column, Object val) {
+        return this.addCondition(true, column, SqlKeyword.NE, val);
+    }
+
+    public Object in(Object column, Object... values) {
+        return this.addCondition(true, column, SqlKeyword.IN, values);
+    }
+
+    public Object like(JFunction column, Object val) {
+        return this.addCondition(true, column, SqlKeyword.LIKE, val);
+    }
+
     public Children ge(JFunction column, Object val) {
         return this.addCondition(true, column, SqlKeyword.GE, val);
     }
 
+    public Children le(JFunction column, Object val) {
+        return this.addCondition(true, column, SqlKeyword.LE, val);
+    }
+
     public Children orderByDesc(JFunction... columns) {
         return this.orderBy(true, false, columns);
+    }
+
+    public Children orderByAsc(JFunction... columns) {
+        return this.orderBy(true, true, columns);
     }
 
     public Children orderBy(boolean condition, boolean isAsc, JFunction... columns) {
@@ -137,24 +153,6 @@ public abstract class AbstractJoinQueryWrapper<Children extends AbstractJoinQuer
             joinMap.put(currentJoin, alias);
         }
         return typedThis;
-    }
-
-    @Override
-    public String getSqlFirst() {
-        String sqlFirst = super.getSqlFirst();
-        if (StringUtils.isBlank(sqlFirst)) {
-            return "";
-        }
-        return sqlFirst;
-    }
-
-    @Override
-    public String getSqlComment() {
-        String comment = super.getSqlComment();
-        if (StringUtils.isBlank(comment)) {
-            return "";
-        }
-        return comment;
     }
 
     protected String getTableName(Class<?> clazz) {

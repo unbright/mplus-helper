@@ -17,7 +17,7 @@ import java.util.Map;
  * @version v1.0
  */
 @Component
-public class ComplexQuery {
+public class ComplexQueryHelper {
     private final MybatisQueryHelper queryHelper;
     private final SqlSession sqlSession;
 
@@ -26,7 +26,7 @@ public class ComplexQuery {
      *
      * @param sqlSession
      */
-    public ComplexQuery(SqlSession sqlSession) {
+    public ComplexQueryHelper(SqlSession sqlSession) {
         this.sqlSession = sqlSession;
         this.queryHelper = new MybatisQueryHelper(sqlSession.getConfiguration());
     }

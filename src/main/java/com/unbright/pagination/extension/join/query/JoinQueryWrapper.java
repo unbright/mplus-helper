@@ -1,6 +1,8 @@
 package com.unbright.pagination.extension.join.query;
 
 import com.baomidou.mybatisplus.core.conditions.SharedString;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.unbright.pagination.extension.annotation.Alias;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
@@ -22,14 +24,27 @@ import static com.baomidou.mybatisplus.core.toolkit.StringPool.SPACE;
  * @author WZP
  * @version v1.0
  */
-public class JoinQueryWrapper extends AbstractJoinQueryWrapper<JoinQueryWrapper> {
+public class JoinQueryWrapper extends AbstractJoinWrapper<JoinQueryWrapper> {
 
     private SharedString sqlSelect = new SharedString();
     private Class<?> result;
+    private IPage<?> page = new Page<>();
 
     @SuppressWarnings("unchecked")
     public JoinQueryWrapper from(Class<?> entity) {
         super.setEntityClass(entity);
+        return typedThis;
+    }
+
+    @Override
+    public JoinQueryWrapper limit(long limit) {
+        this.page.setSize(limit);
+        return typedThis;
+    }
+
+    @Override
+    public JoinQueryWrapper offset(long offset) {
+        this.page.setCurrent(offset);
         return typedThis;
     }
 
@@ -58,11 +73,37 @@ public class JoinQueryWrapper extends AbstractJoinQueryWrapper<JoinQueryWrapper>
     }
 
     @Override
+    public String getSqlFirst() {
+        String sqlFirst = super.getSqlFirst();
+        if (StringUtils.isBlank(sqlFirst)) {
+            return "";
+        }
+        return sqlFirst;
+    }
+
+    @Override
+    public String getSqlComment() {
+        String comment = super.getSqlComment();
+        if (StringUtils.isBlank(comment)) {
+            return "";
+        }
+        return comment;
+    }
+
+    @Override
     public String getSqlSelect() {
         return sqlSelect.getStringValue();
     }
 
     public Class<?> getResultClass() {
         return this.result;
+    }
+
+    public void where(IPage<?> page) {
+        this.page = page;
+    }
+
+    public String getLimitSql() {
+        return String.format(" LIMIT %d, %d", this.page.offset(), this.page.getSize());
     }
 }

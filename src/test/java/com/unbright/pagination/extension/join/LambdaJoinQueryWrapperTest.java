@@ -1,5 +1,8 @@
 package com.unbright.pagination.extension.join;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.unbright.pagination.entity.Goods;
 import com.unbright.pagination.entity.Order;
 import com.unbright.pagination.entity.User;
@@ -39,13 +42,25 @@ class LambdaJoinQueryWrapperTest {
                 .ge(order::getTotalPrice, BigDecimal.valueOf(1))
                 .orderByDesc(order::getCreateTime)
                 .result(OrderInfo.class);
-        //wrapper.join(FarmUnit.class, FarmUser.class).on(FarmUnit::getId,FarmUser::getId)
-        //wrapper.from(FarmUnit.class).join(FarmUser.class).on(FarmUnit::getId,FarmUser::getId)
-        //.join(FarmD.class).on()
-        //.select(result.class).join("user").as("c").on("a.id","b.id")
-        //.join("unit").on("c.id","d.id")
-        //.eq("a.id",12).eq("c.id","30")
         List<OrderInfo> dtos = complexQuery.selectList(wrapper);
         System.out.println(dtos);
+    }
+
+    @Test
+    public void testQueryPage() throws JsonProcessingException {
+        Order order = new Order();
+        User user = new User();
+        Goods goods = new Goods();
+        JoinQueryWrapper wrapper = JoinWrappers.select(order.getClass()).as("od").join(user.getClass()).as("u")
+                .on(user::getId, order::getUserId)
+                .join(goods.getClass()).as("g")
+                .on(goods::getId, order::getGoodsId)
+                .eq(user::getId, 3)
+                .ge(order::getTotalPrice, BigDecimal.valueOf(1))
+                .orderByDesc(order::getCreateTime)
+                .limit(1).offset(3)
+                .result(OrderInfo.class);
+        IPage<Object> page = complexQuery.selectPage(wrapper);
+        System.out.println(new ObjectMapper().writeValueAsString(page));
     }
 }

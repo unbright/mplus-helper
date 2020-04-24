@@ -1,8 +1,11 @@
 package com.unbright.pagination.extension.join;
 
 import com.baomidou.mybatisplus.core.enums.SqlMethod;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Constants;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.unbright.pagination.extension.join.query.JoinQueryWrapper;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.mapping.ResultMap;
@@ -27,6 +30,7 @@ import java.util.Map;
  * @author WZP
  * @version v1.0
  */
+@Slf4j
 @Component
 public class ComplexQuery {
 
@@ -42,13 +46,28 @@ public class ComplexQuery {
     }
 
     public <T> List<T> selectList(JoinQueryWrapper wrapper) {
-        String msId = injectMappedStatement(wrapper);
+        String msId = createMappedStatement(createSelectSql(wrapper), wrapper.getResultClass());
         return sqlSession.selectList(msId, getParams(wrapper));
     }
 
     public <T> T selectOne(JoinQueryWrapper wrapper) {
-        String msId = injectMappedStatement(wrapper);
+        String msId = createMappedStatement(createSelectSql(wrapper), wrapper.getResultClass());
         return sqlSession.selectOne(msId, getParams(wrapper));
+    }
+
+    public <T> IPage<T> selectPage(JoinQueryWrapper wrapper) {
+        String countMsId = createMappedStatement(createCountSql(wrapper), long.class);
+        long total = sqlSession.selectOne(countMsId, getParams(wrapper));
+        List<T> records = this.selectLimit(wrapper);
+        Page<T> page = new Page<>();
+        page.setTotal(total);
+        page.setRecords(records);
+        return page;
+    }
+
+    public <T> List<T> selectLimit(JoinQueryWrapper wrapper) {
+        wrapper.last(wrapper.getLimitSql());
+        return this.selectList(wrapper);
     }
 
     /**
@@ -70,24 +89,47 @@ public class ComplexQuery {
         configuration.addMappedStatement(ms);
     }
 
-    private String injectMappedStatement(JoinQueryWrapper wrapper) {
-        SqlMethod sqlMethod = SqlMethod.SELECT_LIST;
-        String sql = String.format(sqlMethod.getSql(), wrapper.getSqlFirst(),
-                wrapper.getSqlSelect(),
-                wrapper.getFromTable(),
-                wrapper.getSqlSegment(),
-                wrapper.getSqlComment());
-        String msId = createMsId(wrapper.getResultClass() + sql, SqlCommandType.SELECT);
+    private String createMappedStatement(String sql, Class<?> resultType) {
+        String msId = createMsId(resultType + sql);
         if (hasMappedStatement(msId)) {
             return msId;
         }
-        SqlSource source = languageDriver.createSqlSource(configuration, sql, wrapper.getResultClass());
-        newSelectMappedStatement(msId, source, wrapper.getResultClass());
+        SqlSource source = languageDriver.createSqlSource(configuration, sql, Object.class);
+        newSelectMappedStatement(msId, source, resultType);
         return msId;
     }
 
-    private String createMsId(String sql, SqlCommandType sqlCommandType) {
-        return sqlCommandType.toString() + "." + sql.hashCode();
+    /**
+     * 生成统计查询sql.
+     *
+     * @param wrapper wrapper
+     * @return sql
+     */
+    private String createCountSql(JoinQueryWrapper wrapper) {
+        SqlMethod sqlMethod = SqlMethod.SELECT_COUNT;
+        String sql = String.format(sqlMethod.getSql(), wrapper.getSqlFirst(),
+                "1", wrapper.getFromTable(), wrapper.getSqlSegment(), wrapper.getSqlComment());
+        log.info("CREATE COUNT SQL ====> {}", sql);
+        return sql;
+    }
+
+    /**
+     * 生成普通查询sql.
+     *
+     * @param wrapper wrapper
+     * @return sql
+     */
+    private String createSelectSql(JoinQueryWrapper wrapper) {
+        SqlMethod sqlMethod = SqlMethod.SELECT_LIST;
+        String sql = String.format(sqlMethod.getSql(), wrapper.getSqlFirst(),
+                wrapper.getSqlSelect(), wrapper.getFromTable(),
+                wrapper.getSqlSegment(), wrapper.getSqlComment());
+        log.info("CREATE SELECT SQL ====> {}", sql);
+        return sql;
+    }
+
+    private String createMsId(String sql) {
+        return SqlCommandType.SELECT.toString() + "." + sql.hashCode();
     }
 
     private Map<String, JoinQueryWrapper> getParams(JoinQueryWrapper wrapper) {
