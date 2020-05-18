@@ -18,9 +18,9 @@ import java.math.BigDecimal;
 @Data
 public class OrderQueryVo {
 
-    @QueryColumn(dbName = "u.id")
+    @QueryColumn(dbName = "t_user.id")
     private String userId;
 
-    @QueryColumn(dbName = "od.total_price", word = SqlKeyword.GE)
+    @QueryColumn(dbName = "t_order.total_price", word = SqlKeyword.GE)
     private BigDecimal totalPrice;
 }

@@ -60,7 +60,7 @@ public class DemoController extends BaseController {
         //page.orLikeMulti("name", Haphazard::getName, Haphazard::getDescription);
         //order by create_time desc
         page.addOrderByDesc(Haphazard::getCreateTime);
-        return ResponseEntity.ok(null);
+        return ResponseEntity.ok(page);
     }
 
     /**
@@ -112,9 +112,9 @@ public class DemoController extends BaseController {
         User user = new User();
         Order order = new Order();
         Goods goods = new Goods();
-        JoinQueryWrapper queryWrapper = JoinWrappers.select(Order.class).as("od").join(User.class).as("u")
+        JoinQueryWrapper queryWrapper = JoinWrappers.select(Order.class).join(User.class)
                 .on(user::getId, order::getUserId)
-                .join(Goods.class).as("g")
+                .join(Goods.class)
                 .on(goods::getId, order::getGoodsId)
                 .where(wrapper.getPage())
                 .result(OrderInfo.class);

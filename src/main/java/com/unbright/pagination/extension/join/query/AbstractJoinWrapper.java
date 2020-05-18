@@ -1,5 +1,6 @@
 package com.unbright.pagination.extension.join.query;
 
+import com.baomidou.mybatisplus.core.conditions.ISqlSegment;
 import com.baomidou.mybatisplus.core.conditions.SharedString;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.enums.SqlKeyword;
@@ -15,6 +16,8 @@ import com.unbright.pagination.extension.util.FunctionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.reflection.property.PropertyNamer;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -70,10 +73,19 @@ public abstract class AbstractJoinWrapper<Children extends AbstractJoinWrapper<C
 
     @Override
     public Children on(JFunction column1, JFunction column2) {
-        this.segment.add(JoinSegment.JOIN, this.joinString::getStringValue,
-                JoinSegment.AS, () -> this.joinMap.get(this.currentJoin.getStringValue()),
-                JoinSegment.ON, () -> getQueryColumn(column1), () -> StringPool.EQUALS,
-                () -> getQueryColumn(column2));
+        List<ISqlSegment> sqlSegments = new ArrayList<>();
+        sqlSegments.add(JoinSegment.JOIN);
+        sqlSegments.add(this.joinString::getStringValue);
+        String alias = this.joinMap.get(this.currentJoin.getStringValue());
+        if (StringUtils.isNotBlank(alias)) {
+            sqlSegments.add(JoinSegment.AS);
+            sqlSegments.add(() -> this.joinMap.get(this.currentJoin.getStringValue()));
+        }
+        sqlSegments.add(JoinSegment.ON);
+        sqlSegments.add(() -> getQueryColumn(column1));
+        sqlSegments.add(() -> StringPool.EQUALS);
+        sqlSegments.add(() -> getQueryColumn(column2));
+        this.segment.add(sqlSegments.toArray(new ISqlSegment[0]));
         return typedThis;
     }
 
@@ -83,7 +95,11 @@ public abstract class AbstractJoinWrapper<Children extends AbstractJoinWrapper<C
             SerializedLambda lambda = FunctionUtils.resolve(fn);
             TableInfo tableInfo = TableInfoHelper.getTableInfo(lambda.getImplClass());
             String fieldName = PropertyNamer.methodToProperty(lambda.getImplMethodName());
-            String column = joinMap.get(tableInfo.getTableName()) + "." + com.baomidou.mybatisplus.core.toolkit.StringUtils.camelToUnderline(fieldName);
+            String alias = joinMap.get(tableInfo.getTableName());
+            if (StringUtils.isBlank(alias)) {
+                alias = tableInfo.getTableName();
+            }
+            String column = alias + "." + com.baomidou.mybatisplus.core.toolkit.StringUtils.camelToUnderline(fieldName);
             columnCache.put(fn, column);
             return column;
         }
@@ -161,6 +177,10 @@ public abstract class AbstractJoinWrapper<Children extends AbstractJoinWrapper<C
     }
 
     protected String getTableAlias(Class<?> clazz) {
-        return joinMap.get(getTableName(clazz));
+        String alias = joinMap.get(getTableName(clazz));
+        if (StringUtils.isBlank(alias)) {
+            return getTableName(clazz);
+        }
+        return alias;
     }
 }

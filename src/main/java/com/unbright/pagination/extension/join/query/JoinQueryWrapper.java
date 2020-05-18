@@ -114,6 +114,9 @@ public class JoinQueryWrapper extends AbstractJoinWrapper<JoinQueryWrapper> {
 
     @Override
     public String getSqlSegment() {
+        if (this.page.getEw() == null) {
+            return super.getSqlSegment() + this.lastSql.getStringValue();
+        }
         String sqlSegment = this.page.getEw().getSqlSegment();
         if (StringUtils.isBlank(sqlSegment)) {
             return super.getSqlSegment();
@@ -129,6 +132,9 @@ public class JoinQueryWrapper extends AbstractJoinWrapper<JoinQueryWrapper> {
     @SuppressWarnings("unchecked")
     @Override
     public Map<String, Object> getParamNameValuePairs() {
+        if (page.getWrapper() == null) {
+            return super.paramNameValuePairs;
+        }
         Map<String, Object> map = page.getWrapper().getParamNameValuePairs();
         if (MapUtils.isEmpty(map)) {
             return super.getParamNameValuePairs();
