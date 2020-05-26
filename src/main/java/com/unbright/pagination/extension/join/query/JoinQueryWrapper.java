@@ -3,6 +3,7 @@ package com.unbright.pagination.extension.join.query;
 import com.baomidou.mybatisplus.core.conditions.SharedString;
 import com.unbright.pagination.extension.QueryPage;
 import com.unbright.pagination.extension.annotation.Alias;
+import com.unbright.pagination.extension.annotation.SqlTemplate;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
@@ -27,10 +28,10 @@ import static com.baomidou.mybatisplus.core.toolkit.StringPool.SPACE;
  */
 public class JoinQueryWrapper extends AbstractJoinWrapper<JoinQueryWrapper> {
 
-    private SharedString sqlSelect = new SharedString();
+    private final SharedString sqlSelect = new SharedString();
     private Class<?> result;
     private QueryPage<?> page = new QueryPage<>();
-    private SharedString lastSql = new SharedString(" ");
+    private final SharedString lastSql = new SharedString(" ");
 
     @SuppressWarnings("unchecked")
     public JoinQueryWrapper from(Class<?> entity) {
@@ -53,19 +54,30 @@ public class JoinQueryWrapper extends AbstractJoinWrapper<JoinQueryWrapper> {
     public JoinQueryWrapper result(Class<?> dto) {
         this.result = dto;
         List<Field> fields = FieldUtils.getFieldsListWithAnnotation(dto, Alias.class);
-        String selectStr = fields.stream().map(this::getSelectColumn).collect(Collectors.joining(COMMA, EMPTY, SPACE));
+        String selectStr = fields.stream().map(this::getColumn).collect(Collectors.joining(COMMA, EMPTY, SPACE));
         this.sqlSelect.setStringValue(selectStr);
         return typedThis;
     }
 
-    private String getSelectColumn(Field field) {
+    @Override
+    public String transform(Field field) {
         Alias alias = field.getAnnotation(Alias.class);
         String name = alias.name();
         //c.id as name
         if (StringUtils.isBlank(name)) {
             name = com.baomidou.mybatisplus.core.toolkit.StringUtils.camelToUnderline(field.getName());
         }
-        return String.format("%s.%s AS %s", getTableAlias(alias.entity()), name, field.getName());
+        return String.format("%s.%s", getTableAlias(alias.entity()), name);
+    }
+
+    private String getColumn(Field field) {
+        SqlTemplate template = field.getAnnotation(SqlTemplate.class);
+        //使用了函数
+        if (template != null) {
+            String selectWords = template.function().parse(transform(field));
+            return String.format("%s AS %s", selectWords, field.getName());
+        }
+        return String.format("%s AS %s", transform(field), field.getName());
     }
 
     public String getFromTable() {

@@ -1,4 +1,4 @@
-package com.unbright.pagination.extension.join.support;
+package com.unbright.pagination.extension.support;
 
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 

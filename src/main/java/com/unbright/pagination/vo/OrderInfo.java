@@ -4,6 +4,8 @@ import com.unbright.pagination.entity.Goods;
 import com.unbright.pagination.entity.Order;
 import com.unbright.pagination.entity.User;
 import com.unbright.pagination.extension.annotation.Alias;
+import com.unbright.pagination.extension.annotation.SqlTemplate;
+import com.unbright.pagination.extension.constant.SqlFunction;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -24,6 +26,7 @@ public class OrderInfo {
     @Alias(entity = Order.class)
     private String id;
 
+    @SqlTemplate(function = SqlFunction.SUM)
     @Alias(entity = Order.class)
     private BigDecimal totalPrice;
 

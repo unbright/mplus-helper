@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.ExceptionUtils;
 import com.baomidou.mybatisplus.core.toolkit.SerializationUtils;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.core.toolkit.support.SerializedLambda;
-import com.unbright.pagination.extension.join.support.JFunction;
+import com.unbright.pagination.extension.support.JFunction;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

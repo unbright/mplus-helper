@@ -58,6 +58,7 @@ class LambdaJoinQueryWrapperTest {
                 .on(goods::getId, order::getGoodsId)
                 .eq(user::getId, 3)
                 .ge(order::getTotalPrice, BigDecimal.valueOf(1))
+                .groupBy(user::getId)
                 .orderByDesc(order::getCreateTime)
                 .limit(1).offset(3)
                 .result(OrderInfo.class);
