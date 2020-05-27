@@ -13,6 +13,8 @@ import java.lang.annotation.Target;
  * ProjectName: mplus-helper
  * Date: 2020/5/26
  * Time: 11:23
+ * <p>
+ * 可使用sql函数.
  *
  * @author WZP
  * @version v1.0
@@ -22,6 +24,9 @@ import java.lang.annotation.Target;
 @Target({ElementType.FIELD})
 public @interface SqlTemplate {
 
+    /**
+     * sql函数模板.
+     */
     SqlFunction function();
 
 }

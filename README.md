@@ -112,6 +112,7 @@ public class OrderInfo {
     @Alias(entity = Order.class)
     private BigDecimal totalPrice;
 
+    @SqlTemplate(function = SqlFunction.SUM)
     @Alias(entity = Order.class)
     private LocalDateTime createTime;
 
