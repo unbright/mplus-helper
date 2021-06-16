@@ -14,7 +14,6 @@ import com.unbright.query.extension.join.ComplexQuery;
 import com.unbright.query.extension.join.JoinWrappers;
 import com.unbright.query.extension.join.query.JoinQueryWrapper;
 import com.unbright.query.extension.util.QueryUtil;
-import com.unbright.query.service.DemoService;
 import com.unbright.query.vo.OrderInfo;
 import com.unbright.query.vo.OrderQueryVo;
 import com.unbright.query.vo.QueryCondition;
@@ -24,8 +23,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * Created with IDEA
@@ -41,8 +38,6 @@ import javax.servlet.http.HttpServletRequest;
 @RequiredArgsConstructor
 public class DemoController extends BaseController {
 
-    private final DemoService demoService;
-    private final HttpServletRequest request;
     private final ComplexQuery complexQuery;
 
     /**
@@ -51,7 +46,7 @@ public class DemoController extends BaseController {
     @GetMapping("simple")
     public ResponseEntity<Page<Haphazard>> simpleQuery(@RequestParam String categoryId) {
         // ?id=123 => where id = 123
-        QueryPage<Haphazard> page = QueryUtil.smartInitPage(request);
+        QueryPage<Haphazard> page = QueryUtil.smartInitPage(request, "categoryId");
         //and category_id = ?
         page.addEq(Haphazard::getCategoryId, categoryId);
         //and name like '%name%'
@@ -60,6 +55,7 @@ public class DemoController extends BaseController {
         //page.orLikeMulti("name", Haphazard::getName, Haphazard::getDescription);
         //order by create_time desc
         page.addOrderByDesc(Haphazard::getCreateTime);
+        System.out.println(page.getWrapper().getCustomSqlSegment());
         return ResponseEntity.ok(page);
     }
 
@@ -75,7 +71,9 @@ public class DemoController extends BaseController {
         //add custom condition
         //and (a.key like ? or b.key like ?)
         page.orLikeMulti(keywords, "a.key", "b.key");
-        return ResponseEntity.ok(demoService.customQuery(smartInitPage()));
+        System.out.println(page.getWrapper().getCustomSqlSegment());
+        //demoService.customQuery(smartInitPage());
+        return ResponseEntity.ok(page);
     }
 
     /**
@@ -88,8 +86,10 @@ public class DemoController extends BaseController {
      */
     @GetMapping("complex")
     public ResponseEntity<IPage> complexQuery(QueryCondition condition) {
+        //自动注入查询条件
         QueryPage<?> page = QueryUtil.smartQuery(request, condition).getPage();
         log.info(page.getEw().getTargetSql());
+        //TODO使用mapper查询
         return ResponseEntity.ok(page);
     }
 
@@ -103,10 +103,16 @@ public class DemoController extends BaseController {
      */
     @GetMapping("complex2")
     public ResponseEntity<IPage> complexQuery2(@QueryPredicate(QueryCondition.class) QueryPageWrapper<?> wrapper) {
-        log.info(wrapper.getPage().getEw().getCustomSqlSegment());
+        log.info(wrapper.getPage().getEw().getTargetSql());
         return ResponseEntity.ok(wrapper.getPage());
     }
 
+    /**
+     * 请求地址为: /complex3?userId=1&totalPrice=20000
+     *
+     * @param wrapper 包装请求对象
+     * @return 分页结果
+     */
     @GetMapping("complex3")
     public ResponseEntity<IPage<OrderInfo>> complexQuery3(@QueryPredicate(OrderQueryVo.class) QueryPageWrapper<OrderInfo> wrapper) {
         User user = new User();

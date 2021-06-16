@@ -1,17 +1,15 @@
 package com.unbright.query.extension.util;
 
+import com.baomidou.mybatisplus.core.exceptions.MybatisPlusException;
 import com.baomidou.mybatisplus.core.toolkit.ClassUtils;
 import com.baomidou.mybatisplus.core.toolkit.ExceptionUtils;
-import com.baomidou.mybatisplus.core.toolkit.SerializationUtils;
-import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
-import com.baomidou.mybatisplus.core.toolkit.support.SerializedLambda;
+import com.baomidou.mybatisplus.core.toolkit.ReflectionKit;
 import com.unbright.query.extension.support.JFunction;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectStreamClass;
+import java.lang.invoke.SerializedLambda;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,12 +31,11 @@ public class FunctionUtils {
     private static final Map<Class<?>, WeakReference<SerializedLambda>> FUNC_CACHE = new ConcurrentHashMap<>();
 
     /**
-     * 解析 lambda 表达式, 该方法只是调用了 {@link SerializedLambda#resolve(SFunction)} 中的方法，在此基础上加了缓存。
+     * 解析 lambda 表达式, 该方法只是调用了  中的方法，在此基础上加了缓存。
      * 该缓存可能会在任意不定的时间被清除
      *
      * @param func 需要解析的 lambda 对象
      * @return 返回解析后的结果
-     * @see SerializedLambda#resolve(SFunction)
      */
     public static SerializedLambda resolve(JFunction func) {
         Class<?> clazz = func.getClass();
@@ -61,21 +58,20 @@ public class FunctionUtils {
         if (!lambda.getClass().isSynthetic()) {
             throw ExceptionUtils.mpe("该方法仅能传入 lambda 表达式产生的合成类");
         }
-        try (ObjectInputStream objIn = new ObjectInputStream(new ByteArrayInputStream(SerializationUtils.serialize(lambda))) {
-            @Override
-            protected Class<?> resolveClass(ObjectStreamClass objectStreamClass) throws IOException, ClassNotFoundException {
-                Class<?> clazz;
-                try {
-                    clazz = ClassUtils.toClassConfident(objectStreamClass.getName());
-                } catch (Exception ex) {
-                    clazz = super.resolveClass(objectStreamClass);
-                }
-                return clazz == java.lang.invoke.SerializedLambda.class ? com.baomidou.mybatisplus.core.toolkit.support.SerializedLambda.class : clazz;
-            }
-        }) {
-            return (SerializedLambda) objIn.readObject();
-        } catch (ClassNotFoundException | IOException e) {
-            throw ExceptionUtils.mpe("This is impossible to happen", e);
+        try {
+            Method method = lambda.getClass().getDeclaredMethod("writeReplace");
+            return (SerializedLambda) ReflectionKit.setAccessible(method).invoke(lambda);
+        } catch (NoSuchMethodException e) {
+            String message = "Cannot find method writeReplace, please make sure that the lambda composite class is currently passed in";
+            throw new MybatisPlusException(message);
+        } catch (InvocationTargetException | IllegalAccessException e) {
+            throw new MybatisPlusException(e);
         }
+    }
+
+    public static Class<?> getInstantiatedClass(JFunction func) {
+        SerializedLambda lambda = resolve(func);
+        String instantiatedType = lambda.getImplClass().replace('/', '.');
+        return ClassUtils.toClassConfident(instantiatedType);
     }
 }

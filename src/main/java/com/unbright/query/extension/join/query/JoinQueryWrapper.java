@@ -51,9 +51,9 @@ public class JoinQueryWrapper extends AbstractJoinWrapper<JoinQueryWrapper> {
         return typedThis;
     }
 
-    public JoinQueryWrapper result(Class<?> dto) {
-        this.result = dto;
-        List<Field> fields = FieldUtils.getFieldsListWithAnnotation(dto, Alias.class);
+    public JoinQueryWrapper result(Class<?> result) {
+        this.result = result;
+        List<Field> fields = FieldUtils.getFieldsListWithAnnotation(result, Alias.class);
         String selectStr = fields.stream().map(this::getColumn).collect(Collectors.joining(COMMA, EMPTY, SPACE));
         this.sqlSelect.setStringValue(selectStr);
         return typedThis;

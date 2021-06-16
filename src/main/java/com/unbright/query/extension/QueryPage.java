@@ -6,12 +6,13 @@ import com.baomidou.mybatisplus.core.enums.SqlKeyword;
 import com.baomidou.mybatisplus.core.toolkit.LambdaUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.core.toolkit.support.LambdaMeta;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
-import com.baomidou.mybatisplus.core.toolkit.support.SerializedLambda;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.ibatis.reflection.property.PropertyNamer;
 
 import java.util.Arrays;
@@ -287,7 +288,10 @@ public class QueryPage<T> extends Page<T> {
     }
 
     public QueryPage<T> groupBy(String... columns) {
-        this.wrapper.groupBy(columns);
+        if (ArrayUtils.isNotEmpty(columns)) {
+            String[] array = Arrays.stream(columns).skip(1).toArray(String[]::new);
+            this.wrapper.groupBy(columns[0], array);
+        }
         return this;
     }
 
@@ -296,8 +300,11 @@ public class QueryPage<T> extends Page<T> {
     }
 
     public QueryPage<T> addOrderByAsc(QueryWrapper<T> wrapper, String... keys) {
-        wrapper.orderByAsc(keys);
-        this.setWrapper(wrapper);
+        if (ArrayUtils.isNotEmpty(keys)) {
+            String[] array = Arrays.stream(keys).skip(1).toArray(String[]::new);
+            wrapper.orderByAsc(keys[0], array);
+            this.setWrapper(wrapper);
+        }
         return this;
     }
 
@@ -306,8 +313,11 @@ public class QueryPage<T> extends Page<T> {
     }
 
     public QueryPage<T> addOrderByDesc(QueryWrapper<T> wrapper, String... keys) {
-        wrapper.orderByDesc(keys);
-        this.setWrapper(wrapper);
+        if (ArrayUtils.isNotEmpty(keys)) {
+            String[] array = Arrays.stream(keys).skip(1).toArray(String[]::new);
+            wrapper.orderByDesc(keys[0], array);
+            this.setWrapper(wrapper);
+        }
         return this;
     }
 
@@ -364,8 +374,8 @@ public class QueryPage<T> extends Page<T> {
      * @return column name
      */
     private String getDbColumn(SFunction<T, Object> function) {
-        SerializedLambda lambda = LambdaUtils.resolve(function);
-        String fieldName = PropertyNamer.methodToProperty(lambda.getImplMethodName());
+        LambdaMeta meta = LambdaUtils.extract(function);
+        String fieldName = PropertyNamer.methodToProperty(meta.getImplMethodName());
         return StringUtils.camelToUnderline(fieldName);
     }
 }

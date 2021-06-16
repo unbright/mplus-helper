@@ -122,7 +122,7 @@ public class ComplexQuery {
         SqlMethod sqlMethod = SqlMethod.SELECT_LIST;
         String sql = String.format(sqlMethod.getSql(), wrapper.getSqlFirst(),
                 wrapper.getSqlSelect(), wrapper.getFromTable(),
-                wrapper.getSqlSegment(), wrapper.getSqlComment());
+                wrapper.getSqlSegment(), "", wrapper.getSqlComment());
         log.info("CREATE SELECT SQL ====> {}", sql);
         return sql;
     }

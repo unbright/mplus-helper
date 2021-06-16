@@ -23,7 +23,7 @@ import java.time.LocalDateTime;
 @TableName("t_order")
 public class Order implements Serializable {
     @TableId(type = IdType.AUTO)
-    private int id;
+    private Integer id;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createTime;
@@ -33,6 +33,6 @@ public class Order implements Serializable {
     private int userId;
     private int goodsId;
     private BigDecimal price;
-    private int stock;
+    private int number;
     private BigDecimal totalPrice;
 }

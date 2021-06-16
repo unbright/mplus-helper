@@ -22,6 +22,7 @@ public class DemoServiceImpl extends ServiceImpl<OrderDao, Order> implements Dem
 
     @Override
     public IPage customQuery(QueryPage page) {
+        //TODO使用mapper查询
         return baseMapper.queryPage(page);
     }
 }

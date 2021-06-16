@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.unbright.query.entity.Order;
 import com.unbright.query.extension.QueryPage;
-import org.apache.ibatis.annotations.Mapper;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -16,7 +15,6 @@ import org.springframework.stereotype.Repository;
  * @author WZP
  * @version v1.0
  */
-@Mapper
 @Repository
 public interface OrderDao extends BaseMapper<Order> {
 

@@ -8,6 +8,7 @@ import com.unbright.query.entity.Order;
 import com.unbright.query.entity.User;
 import com.unbright.query.extension.join.query.JoinQueryWrapper;
 import com.unbright.query.vo.OrderInfo;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -39,12 +40,13 @@ class LambdaJoinQueryWrapperTest {
                 .on(user::getId, order::getUserId)
                 .join(goods.getClass()).as("g")
                 .on(goods::getId, order::getGoodsId)
-                .eq(user::getId, 2)
+                .eq(user::getId, 1)
                 .ge(order::getTotalPrice, BigDecimal.valueOf(1))
                 .orderByDesc(order::getCreateTime)
                 .result(OrderInfo.class);
         List<OrderInfo> dtos = complexQuery.selectList(wrapper);
         System.out.println(dtos);
+        Assertions.assertThat(dtos).size().isEqualTo(2);
     }
 
     @Test
@@ -56,11 +58,11 @@ class LambdaJoinQueryWrapperTest {
                 .on(user::getId, order::getUserId)
                 .join(goods.getClass()).as("g")
                 .on(goods::getId, order::getGoodsId)
-                .eq(user::getId, 3)
+                .eq(user::getId, 1)
                 .ge(order::getTotalPrice, BigDecimal.valueOf(1))
                 .groupBy(user::getId)
                 .orderByDesc(order::getCreateTime)
-                .limit(1).offset(3)
+                .limit(1).offset(1)
                 .result(OrderInfo.class);
         IPage<OrderInfo> page = complexQuery.selectPage(wrapper);
         System.out.println(new ObjectMapper().writeValueAsString(page));

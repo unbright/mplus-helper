@@ -7,7 +7,6 @@ import com.baomidou.mybatisplus.core.enums.SqlKeyword;
 import com.baomidou.mybatisplus.core.metadata.TableInfo;
 import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import com.baomidou.mybatisplus.core.toolkit.StringPool;
-import com.baomidou.mybatisplus.core.toolkit.support.SerializedLambda;
 import com.unbright.query.extension.join.segments.JoinOnMergeSegment;
 import com.unbright.query.extension.join.segments.JoinSegment;
 import com.unbright.query.extension.support.JFunction;
@@ -16,7 +15,10 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.reflection.property.PropertyNamer;
 
+import java.lang.invoke.SerializedLambda;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,6 +27,7 @@ import java.util.stream.Stream;
 
 import static com.baomidou.mybatisplus.core.enums.SqlKeyword.ASC;
 import static com.baomidou.mybatisplus.core.enums.SqlKeyword.DESC;
+import static com.baomidou.mybatisplus.core.enums.SqlKeyword.GROUP_BY;
 import static com.baomidou.mybatisplus.core.enums.SqlKeyword.ORDER_BY;
 
 
@@ -95,7 +98,7 @@ public abstract class AbstractJoinWrapper<Children extends AbstractJoinWrapper<C
         String cache = columnCache.get(fn);
         if (StringUtils.isBlank(cache)) {
             SerializedLambda lambda = FunctionUtils.resolve(fn);
-            TableInfo tableInfo = TableInfoHelper.getTableInfo(lambda.getImplClass());
+            TableInfo tableInfo = TableInfoHelper.getTableInfo(FunctionUtils.getInstantiatedClass(fn));
             String fieldName = PropertyNamer.methodToProperty(lambda.getImplMethodName());
             String alias = joinMap.get(tableInfo.getTableName());
             if (StringUtils.isBlank(alias)) {
@@ -108,12 +111,22 @@ public abstract class AbstractJoinWrapper<Children extends AbstractJoinWrapper<C
         return cache;
     }
 
+    private SerializedLambda serialized(Object lambda) {
+        try {
+            Method writeMethod = lambda.getClass().getDeclaredMethod("writeReplace");
+            writeMethod.setAccessible(true);
+            return (SerializedLambda) writeMethod.invoke(lambda);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     protected String getQueryColumns(JFunction... fns) {
         return Stream.of(fns).map(this::getQueryColumn).collect(Collectors.joining(","));
     }
 
     protected Children addCondition(boolean condition, JFunction column, SqlKeyword sqlKeyword, Object val) {
-        this.doIt(condition, () -> getQueryColumn(column), sqlKeyword, () -> this.formatSql("{0}", val));
+        this.maybeDo(condition, () -> appendSqlSegments(() -> getQueryColumn(column), sqlKeyword, () -> formatParam(null, val)));
         return typedThis;
     }
 
@@ -154,9 +167,8 @@ public abstract class AbstractJoinWrapper<Children extends AbstractJoinWrapper<C
             return typedThis;
         }
         SqlKeyword mode = isAsc ? ASC : DESC;
-        for (JFunction column : columns) {
-            doIt(condition, ORDER_BY, () -> getQueryColumn(column), mode);
-        }
+        this.maybeDo(condition, () -> Arrays.stream(columns).forEach(c -> appendSqlSegments(ORDER_BY,
+                () -> this.getQueryColumn(c), mode)));
         return typedThis;
     }
 
@@ -166,7 +178,7 @@ public abstract class AbstractJoinWrapper<Children extends AbstractJoinWrapper<C
 
     public Children groupBy(boolean condition, JFunction... columns) {
         if (ArrayUtils.isNotEmpty(columns)) {
-            this.doIt(condition, SqlKeyword.GROUP_BY, () -> this.getQueryColumns(columns));
+            this.maybeDo(condition, () -> appendSqlSegments(GROUP_BY, () -> this.getQueryColumns(columns)));
         }
         return typedThis;
     }
